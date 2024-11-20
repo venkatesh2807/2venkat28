@@ -1,2 +1,2 @@
-2venkat28-venkateshs-projects-3250f260.vercel.app
+2venkat28-venkateshs-projects-3250f260.vercel.a
 
