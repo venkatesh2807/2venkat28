@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Max-Min Finder</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Fixed size for the chart */
+        #chartContainer {
+            width: 80%;
+            height: 400px;
+            margin: 0 auto;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+    </style>
+</head>
+<body>
+    <h1>Max-Min Finder</h1>
+    <label for="sizes">Enter Sizes (comma-separated):</label>
+    <input type="text" id="sizes" placeholder="e.g., 10, 50, 100">
+    <button onclick="generateResults()">Generate Results</button>
+
+    <h3>Results</h3>
+    <div id="result"></div>
+
+    <h3>Time Complexity</h3>
+    <div id="chartContainer">
+        <canvas id="timeComplexityChart"></canvas>
+    </div>
+
+    <script>
+        async function generateResults() {
+            const sizes = document.getElementById('sizes').value.split(',').map(Number);
+            const response = await fetch('/calculate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sizes })
+            });
+
+            const data = await response.json();
+            const { results, timeData } = data;
+
+            // Add a threshold to prevent small times from showing as zero
+            const minTimeThreshold = 0.001; // ms (0.001ms)
+
+            timeData.divideTimes = timeData.divideTimes.map(time => time < minTimeThreshold ? minTimeThreshold : time);
+            timeData.standardTimes = timeData.standardTimes.map(time => time < minTimeThreshold ? minTimeThreshold : time);
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '';
+            results.forEach(res => {
+                resultDiv.innerHTML += `
+                    <p>Size: ${res.size}</p>
+                    <p>Max: ${res.max}, Min: ${res.min}</p>
+                    <p>Time (Divide and Conquer): ${res.divideTime} ms, Time (Standard): ${res.standardTime} ms</p>
+                    <hr>
+                `;
+            });
+
+            const ctx = document.getElementById('timeComplexityChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sizes,
+                    datasets: [
+                        {
+                            label: 'Divide and Conquer',
+                            data: timeData.divideTimes,
+                            borderColor: 'blue',
+                            fill: false
+                        },
+                        {
+                            label: 'Standard Method',
+                            data: timeData.standardTimes,
+                            borderColor: 'red',
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: false, // Fixed size chart, does not resize
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Array Size'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Time (ms)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
